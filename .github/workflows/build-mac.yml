@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  build-apple-silicon:
+  build-universal:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -21,67 +21,22 @@ jobs:
       - name: Install dependencies
         run: pip install customtkinter pandas openpyxl tkcalendar matplotlib pyinstaller
 
-      - name: Build app
-        run: python -m PyInstaller --windowed --collect-all customtkinter --collect-all tkcalendar --collect-all matplotlib --name "Otchety" report_builder.py
+      - name: Build universal app
+        run: python -m PyInstaller --windowed --target-arch universal2 --collect-all customtkinter --collect-all tkcalendar --collect-all matplotlib --name "Otchety" report_builder.py
 
       - name: Rename and zip
         run: |
           cd dist
           mv Otchety.app "Отчёты.app"
-          zip -r "$GITHUB_WORKSPACE/Otchety-AppleSilicon.zip" "Отчёты.app"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: apple-silicon
-          path: Otchety-AppleSilicon.zip
-
-  build-intel:
-    runs-on: macos-13
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install customtkinter pandas openpyxl tkcalendar matplotlib pyinstaller
-
-      - name: Build app
-        run: python -m PyInstaller --windowed --collect-all customtkinter --collect-all tkcalendar --collect-all matplotlib --name "Otchety" report_builder.py
-
-      - name: Rename and zip
-        run: |
-          cd dist
-          mv Otchety.app "Отчёты.app"
-          zip -r "$GITHUB_WORKSPACE/Otchety-Intel.zip" "Отчёты.app"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: intel
-          path: Otchety-Intel.zip
-
-  release:
-    needs: [build-apple-silicon, build-intel]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: apple-silicon
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: intel
+          zip -r "$GITHUB_WORKSPACE/Otchety-Universal.zip" "Отчёты.app"
 
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "*.zip"
+          artifacts: "Otchety-Universal.zip"
           tag: latest
           name: "Otchety - last version"
           body: |
-            Download the right file:
-            - **Otchety-AppleSilicon.zip** - Mac M1/M2/M3
-            - **Otchety-Intel.zip** - Mac Intel (2019 and older)
+            **Otchety-Universal.zip** — works on all Macs (Intel and M1/M2/M3)
 
             After downloading: unzip -> right-click Отчёты.app -> Open
           allowUpdates: true
